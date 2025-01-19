@@ -35,7 +35,7 @@ func getConsoleEncoderConfig() zapcore.EncoderConfig {
 		StacktraceKey:  "stacktrace",
 		LineEnding:     zapcore.DefaultLineEnding,
 		EncodeLevel:    zapcore.CapitalColorLevelEncoder, // 使用带颜色的日志级别
-		EncodeTime:     zapcore.TimeEncoderOfLayout(time.RFC3339),
+		EncodeTime:     zapcore.TimeEncoderOfLayout(time.RFC3339Nano),
 		EncodeDuration: zapcore.SecondsDurationEncoder,
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
