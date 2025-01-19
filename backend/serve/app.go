@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -70,8 +71,36 @@ func (app *App) frontend() {
 	isSpa := config.GetBool("frontend.isSpa")
 
 	if isDev {
-		// 开发环境：代理到前端开发服务器
+		// 开发环境：先检查前端服务是否可用
 		target := fmt.Sprintf("http://localhost:%d", frontendPort)
+
+		// 检查前端服务是否可用
+		client := http.Client{
+			Timeout: 100 * time.Millisecond,
+		}
+		_, err := client.Get(target)
+		if err != nil {
+			app.serve.Logger.Warn(fmt.Sprintf(
+				"前端开发服务未启动，请先在前端目录运行开发服务器 (端口: %d)\n"+
+					"Frontend development server is not running, please start it first (port: %d)",
+				frontendPort, frontendPort,
+			))
+			// 返回提示信息的中间件
+			app.serve.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+				return func(c echo.Context) error {
+					if strings.HasPrefix(c.Path(), "/rpc") {
+						return next(c)
+					}
+					return c.JSON(http.StatusServiceUnavailable, map[string]string{
+						"error": fmt.Sprintf("Frontend development server is not running on port %d", frontendPort),
+						"hint":  "Please start the frontend development server first",
+					})
+				}
+			})
+			return
+		}
+
+		// 前端服务可用，设置代理
 		proxy := middleware.ProxyWithConfig(middleware.ProxyConfig{
 			Skipper: func(c echo.Context) bool {
 				// 跳过 /rpc 路径的请求
