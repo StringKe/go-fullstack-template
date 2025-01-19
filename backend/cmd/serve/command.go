@@ -1,7 +1,10 @@
 package serve
 
 import (
+	"context"
 	"fmt"
+	"os"
+	"os/signal"
 
 	"app/backend/core"
 	"app/backend/serve"
@@ -35,9 +38,10 @@ func runCommand(app *core.App) error {
 		return err
 	}
 
-	err = serveApp.Start()
-	if err != nil {
-		return err
-	}
-	return nil
+	// 创建一个可以被取消的上下文
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
+	// 启动服务器并等待它完成或出错
+	return serveApp.Start(ctx)
 }

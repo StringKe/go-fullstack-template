@@ -4,6 +4,7 @@ import (
 	"app/backend/core"
 	"app/backend/pkg/logger"
 	"app/backend/pkg/util"
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -86,6 +87,10 @@ func NewServeApp(core *core.App) (*App, error) {
 
 	serve.Use(middleware.Recover())
 	serve.Use(middleware.CORS())
+	serve.Use(middleware.Decompress())
+	serve.Use(middleware.GzipWithConfig(middleware.GzipConfig{
+		Level: 5,
+	}))
 
 	return &App{
 		core:  core,
@@ -93,7 +98,7 @@ func NewServeApp(core *core.App) (*App, error) {
 	}, nil
 }
 
-func (app *App) Start() error {
+func (app *App) Start(ctx context.Context) error {
 	// 获取 Vanguard transcoder 也就是 http 处理器
 	transcoder, err := app.core.GetContainer().GetVanguardTranscoder()
 	if err != nil {
@@ -118,15 +123,41 @@ func (app *App) Start() error {
 		MaxConcurrentStreams: 250,
 	}
 
-	logger.Info(fmt.Sprintf("Local: http://localhost:%d/", port))
-	addrs, err := util.GetAllIPAddresses()
-	if err == nil {
-		for _, addr := range addrs {
-			logger.Info(fmt.Sprintf("Network: http://%s:%d/", addr, port))
+	// 启动服务器
+	go func() {
+		logger.Info(fmt.Sprintf("Local: http://localhost:%d/", port))
+		addrs, err := util.GetAllIPAddresses()
+		if err == nil {
+			for _, addr := range addrs {
+				logger.Info(fmt.Sprintf("Network: http://%s:%d/", addr, port))
+			}
 		}
+
+		if err := app.serve.StartH2CServer(addr, h2s); err != nil && err != http.ErrServerClosed {
+			logger.Error("Server start failed", zap.Error(err))
+		}
+	}()
+
+	// 等待上下文取消
+	<-ctx.Done()
+	logger.Info("Current context is done, shutting down server...")
+
+	// 优雅停机
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := app.Shutdown(shutdownCtx); err != nil {
+		logger.Error("Server shutdown failed", zap.Error(err))
+		return err
 	}
 
-	return app.serve.StartH2CServer(addr, h2s)
+	logger.Info("Server has been successfully shut down")
+	return nil
+}
+
+// Shutdown 优雅地关闭服务器
+func (app *App) Shutdown(ctx context.Context) error {
+	return app.serve.Shutdown(ctx)
 }
 
 // 进行前端处理
@@ -148,9 +179,8 @@ func (app *App) frontend() {
 		_, err := client.Get(target)
 		if err != nil {
 			app.serve.Logger.Warn(fmt.Sprintf(
-				"前端开发服务未启动，请先在前端目录运行开发服务器 (端口: %d)\n"+
-					"Frontend development server is not running, please start it first (port: %d)",
-				frontendPort, frontendPort,
+				"Frontend development server is not running, please start it first (port: %d)",
+				frontendPort,
 			))
 			// 返回提示信息的中间件
 			app.serve.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
