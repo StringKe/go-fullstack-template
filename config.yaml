@@ -17,8 +17,13 @@ frontend:
     isspa: true
     port: 21422
 log:
-    format: text
-    level: info
+    compress: true
+    console: true
+    file: logs/app.log
+    level: debug
+    max_age: 30
+    max_backups: 30
+    max_size: 100
 server:
     host: 0.0.0.0
     port: 21421

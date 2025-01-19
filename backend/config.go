@@ -1,9 +1,11 @@
 package main
 
 import (
+	"app/backend/pkg/logger"
 	"time"
 
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 func InitConfig() {
@@ -31,7 +33,12 @@ func InitConfig() {
 	viper.SetDefault("server.host", "0.0.0.0")
 
 	viper.SetDefault("log.level", "info")
-	viper.SetDefault("log.format", "text")
+	viper.SetDefault("log.file", "")
+	viper.SetDefault("log.max_size", 100)
+	viper.SetDefault("log.max_backups", 30)
+	viper.SetDefault("log.max_age", 30)
+	viper.SetDefault("log.compress", true)
+	viper.SetDefault("log.console", true)
 
 	viper.SetDefault("db.host", "127.0.0.1")
 	viper.SetDefault("db.port", 5432)
@@ -56,4 +63,19 @@ func InitConfig() {
 	if err := viper.WriteConfig(); err != nil {
 		panic(err)
 	}
+
+	// 初始化日志
+	logConfig := &logger.Config{
+		Level:      viper.GetString("log.level"),
+		File:       viper.GetString("log.file"),
+		MaxSize:    viper.GetInt("log.max_size"),
+		MaxBackups: viper.GetInt("log.max_backups"),
+		MaxAge:     viper.GetInt("log.max_age"),
+		Compress:   viper.GetBool("log.compress"),
+	}
+	if err := logger.InitLogger(logConfig); err != nil {
+		panic(err)
+	}
+
+	logger.Info("Current config: ", zap.Any("config", viper.AllSettings()))
 }

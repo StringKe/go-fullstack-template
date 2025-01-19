@@ -6,6 +6,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"time"
 
 	"app/backend/core"
 
@@ -45,6 +46,7 @@ func (s *TestService) Test3(ctx context.Context, req *connect.Request[v1.Test3Re
 		err := stream.Send(&v1.Test3Response{
 			Message: "Hello " + strconv.Itoa(i),
 		})
+		time.Sleep(1 * time.Second)
 		if err != nil {
 			break
 		}

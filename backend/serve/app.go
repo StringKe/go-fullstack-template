@@ -2,6 +2,7 @@ package serve
 
 import (
 	"app/backend/core"
+	"app/backend/pkg/logger"
 	"app/backend/pkg/util"
 	"fmt"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"go.uber.org/zap"
 	"golang.org/x/net/http2"
 )
 
@@ -21,12 +23,68 @@ type App struct {
 }
 
 func NewServeApp(core *core.App) (*App, error) {
+
 	serve := echo.New()
 	// gRPC requires HTTP/2
 	serve.HideBanner = true
-	serve.Use(middleware.Logger())
+	serve.HidePort = true
+
+	serve.Use(middleware.RequestID())
+
+	serve.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogURI:           true,
+		LogMethod:        true,
+		LogStatus:        true,
+		LogLatency:       true,
+		LogRemoteIP:      true,
+		LogUserAgent:     true,
+		LogRequestID:     true,
+		LogReferer:       true,
+		LogHost:          true,
+		LogProtocol:      true,
+		LogRoutePath:     true,
+		LogURIPath:       true,
+		LogContentLength: true,
+		LogResponseSize:  true,
+		LogError:         true,
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			path := fmt.Sprintf("%s %s %s", v.RequestID, v.Method, v.URI)
+			if v.Error == nil {
+				logger.Info(path,
+					zap.Int("status", v.Status),
+					zap.String("latency", v.Latency.String()),
+					zap.String("remote_ip", v.RemoteIP),
+					zap.String("user_agent", v.UserAgent),
+					zap.String("referer", v.Referer),
+					zap.String("host", v.Host),
+					zap.String("protocol", v.Protocol),
+					zap.String("route_path", v.RoutePath),
+					zap.String("uri_path", v.URIPath),
+					zap.String("content_length", v.ContentLength),
+					zap.Int64("response_size", v.ResponseSize),
+				)
+			} else {
+				logger.Error(path,
+					zap.Int("status", v.Status),
+					zap.String("latency", v.Latency.String()),
+					zap.String("remote_ip", v.RemoteIP),
+					zap.String("user_agent", v.UserAgent),
+					zap.String("referer", v.Referer),
+					zap.String("host", v.Host),
+					zap.String("protocol", v.Protocol),
+					zap.String("route_path", v.RoutePath),
+					zap.String("uri_path", v.URIPath),
+					zap.String("content_length", v.ContentLength),
+					zap.Int64("response_size", v.ResponseSize),
+					zap.Error(v.Error),
+				)
+			}
+			return nil
+
+		},
+	}))
+
 	serve.Use(middleware.Recover())
-	// Enable CORS
 	serve.Use(middleware.CORS())
 
 	return &App{
@@ -59,6 +117,15 @@ func (app *App) Start() error {
 	h2s := &http2.Server{
 		MaxConcurrentStreams: 250,
 	}
+
+	logger.Info(fmt.Sprintf("Local: http://localhost:%d/", port))
+	addrs, err := util.GetAllIPAddresses()
+	if err == nil {
+		for _, addr := range addrs {
+			logger.Info(fmt.Sprintf("Network: http://%s:%d/", addr, port))
+		}
+	}
+
 	return app.serve.StartH2CServer(addr, h2s)
 }
 
@@ -111,11 +178,6 @@ func (app *App) frontend() {
 					URL: util.Must(url.Parse(target)),
 				},
 			}),
-			ModifyResponse: func(res *http.Response) error {
-				// 允许跨域
-				res.Header.Set("Access-Control-Allow-Origin", "*")
-				return nil
-			},
 		})
 		app.serve.Use(proxy)
 	} else {

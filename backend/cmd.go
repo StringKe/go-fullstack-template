@@ -26,9 +26,12 @@ func init() {
 	// 读取并初始化配置
 	InitConfig()
 	// 初始化核心
-	coreApp := InitApp()
+	app, err := InitApp()
+	if err != nil {
+		panic(err)
+	}
 	// 将核心应用添加到根命令的上下文中
-	RootCmd.SetContext(context.WithValue(context.Background(), core.CoreAppKey, coreApp))
+	RootCmd.SetContext(context.WithValue(context.Background(), core.CoreAppKey, app))
 
 	// 添加子命令，如果子命令还存在子命令，需要在子命令的 init 函数中添加
 	RootCmd.AddCommand(config.Command)

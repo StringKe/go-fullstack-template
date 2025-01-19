@@ -4,6 +4,7 @@ import { TestService } from "./gen/v1/test_service_pb.ts";
 
 const transport = createConnectTransport({
   baseUrl: "/rpc",
+  useBinaryFormat: true,
 });
 
 const client = createClient(TestService, transport);
