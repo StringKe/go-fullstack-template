@@ -16,6 +16,11 @@
 - ⚡️ 支持 gRPC、gRPC-Web 和 Connect 协议
 - 🔒 内置 CORS 支持
 - 📝 结构化的日志系统
+- 🎨 智能的前端集成
+  - 开发环境自动代理
+  - 生产环境静态文件服务
+  - SPA 路由支持
+  - 开发服务检测和提示
 
 ## 技术栈
 
@@ -32,6 +37,7 @@
 - TypeScript
 - React
 - Connect RPC Web Client
+- Vite (开发服务器和构建工具)
 
 ## 快速开始
 
@@ -84,15 +90,21 @@ cd frontend
 pnpm dev
 ```
 
+服务器会自动检测前端开发服务是否运行。如果前端服务未启动，会显示友好的提示信息。
+
 ### 配置
 
 项目使用 `config.yaml` 进行配置，支持以下配置项：
 
 ```yaml
-env: development
+env: development # 环境：development/production
 server:
-  port: 21421
+  port: 21421 # 后端服务端口
   host: 0.0.0.0
+frontend:
+  port: 21422 # 前端开发服务器端口
+  dist: ./dist # 前端构建输出目录
+  isSpa: true # 是否为单页应用
 log:
   level: info
   format: text
@@ -118,11 +130,33 @@ db:
 │   ├── cmd/            # 命令行工具
 │   ├── core/           # 核心功能
 │   ├── pkg/            # 生成的代码
+│   ├── serve/          # HTTP 服务器和前端集成
 │   └── service/        # 业务服务
 ├── frontend/           # 前端代码
+│   ├── src/           # 源代码
+│   └── dist/          # 构建输出
 ├── proto/              # Protocol Buffers 定义
 └── config.yaml         # 配置文件
 ```
+
+## 前端开发模式
+
+框架提供两种前端运行模式：
+
+### 开发模式 (env: development)
+
+- 自动检测前端开发服务器是否运行
+- 如果前端服务未运行，提供友好的错误提示
+- 将非 `/rpc` 请求代理到前端开发服务器
+- RPC 请求直接由后端处理
+- 支持热重载和开发工具
+
+### 生产模式 (env: production)
+
+- 静态文件服务，从 `frontend.dist` 目录提供文件
+- 支持单页应用 (SPA) 路由
+- 所有非 `/rpc` 路由返回 `index.html`
+- 高效的静态资源服务
 
 ## API 开发
 
@@ -156,7 +190,10 @@ pnpm build
 
 ### 部署
 
-1. 配置 `config.yaml`
+1. 配置 `config.yaml`，确保：
+   - `env` 设置为 `production`
+   - `frontend.dist` 指向正确的前端构建目录
+   - `frontend.isSpa` 根据应用类型设置
 2. 运行编译后的二进制文件：
 
 ```bash
