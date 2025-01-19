@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package v1;
+
+import "google/api/annotations.proto";
+
+service TestService {
+  rpc Test1(Test1Request) returns (Test1Response) {
+    option (google.api.http) = {
+      post: "/v1/test1"
+      body: "*"
+    };
+  }
+  rpc Test2(Test2Request) returns (Test2Response) {
+    option (google.api.http) = {
+      post: "/v1/test2"
+      body: "*"
+    };
+  }
+  // 流式返回
+  rpc Test3(Test3Request) returns (stream Test3Response) {
+    option (google.api.http) = {
+      post: "/v1/test3"
+      body: "*"
+    };
+  }
+}
+
+message Test1Request {}
+
+message Test1Response {
+  string message = 1;
+}
+
+message Test2Request {
+  string name = 1;
+}
+
+message Test2Response {
+  string message = 1;
+}
+
+message Test3Request {
+  string name = 1;
+}
+
+message Test3Response {
+  string message = 1;
+}

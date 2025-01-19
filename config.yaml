@@ -1,0 +1,19 @@
+db:
+    host: 127.0.0.1
+    name: app
+    password: postgres
+    pool_max_conns: 10
+    pool_max_idle_conns: 5
+    pool_max_idle_time: 5m0s
+    pool_max_lifetime: 10m0s
+    port: 5432
+    sslmode: disable
+    timezone: Asia/Shanghai
+    user: postgres
+env: development
+log:
+    format: text
+    level: info
+server:
+    host: 0.0.0.0
+    port: 21421

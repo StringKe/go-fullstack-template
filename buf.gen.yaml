@@ -1,0 +1,22 @@
+version: v2
+managed:
+  enabled: true
+  disable:
+    - file_option: go_package
+      module: buf.build/googleapis/googleapis
+  override:
+    - file_option: go_package_prefix
+      value: app/backend/pkg/gen
+plugins:
+  - local: protoc-gen-go
+    out: backend/pkg/gen
+    opt: paths=source_relative
+  - local: protoc-gen-connect-go
+    out: backend/pkg/gen
+    opt: paths=source_relative
+  - local: protoc-gen-es
+    out: frontend/src/gen
+    include_imports: true
+    opt: target=ts
+
+clean: true
