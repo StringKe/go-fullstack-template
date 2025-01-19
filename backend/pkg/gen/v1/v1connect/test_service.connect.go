@@ -5,9 +5,9 @@
 package v1connect
 
 import (
+	v1 "app/backend/pkg/gen/v1"
 	connect "connectrpc.com/connect"
 	context "context"
-	v1 "app/backend/pkg/gen/v1"
 	errors "errors"
 	http "net/http"
 	strings "strings"
