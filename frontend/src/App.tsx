@@ -3,7 +3,7 @@ import { createConnectTransport } from "@connectrpc/connect-web";
 import { TestService } from "./gen/v1/test_service_pb.ts";
 
 const transport = createConnectTransport({
-  baseUrl: "http://127.0.0.1:21421/rpc",
+  baseUrl: "/rpc",
 });
 
 const client = createClient(TestService, transport);

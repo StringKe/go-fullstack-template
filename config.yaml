@@ -11,6 +11,11 @@ db:
     timezone: Asia/Shanghai
     user: postgres
 env: development
+frontend:
+    dist: ./dist
+    host: 0.0.0.0
+    isspa: true
+    port: 21422
 log:
     format: text
     level: info

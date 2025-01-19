@@ -44,6 +44,12 @@ func InitConfig() {
 	viper.SetDefault("db.pool_max_idle_conns", 5)
 	viper.SetDefault("db.pool_max_lifetime", 10*time.Minute)
 	viper.SetDefault("db.pool_max_idle_time", 5*time.Minute)
+
+	viper.SetDefault("frontend.port", 21422)
+	viper.SetDefault("frontend.host", "0.0.0.0")
+	viper.SetDefault("frontend.dist", "./dist")
+	viper.SetDefault("frontend.isSpa", true) // 是否是 spa 应用，也就是前端路由是单页应用
+
 	//----
 
 	// 更新并存储最新的配置，犹豫存在后续代码更新但是目前的配置文件不是最新的情况
