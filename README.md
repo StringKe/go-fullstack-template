@@ -1,56 +1,71 @@
 # CSS (Connect Service Scaffold)
 
-一个基于 Connect RPC 的全栈 Web 开发框架，使用 Go 和 TypeScript 构建。
+一个现代化的全栈 Web 开发框架，基于 Connect RPC 构建，使用 Go 和 TypeScript 技术栈。专注于提供高性能、类型安全和开发者友好的开发体验。
 
-## 特性
+## 核心特性
 
-- 🚀 基于 Connect RPC 的高性能通信
-- 🔄 支持多种 RPC 模式：Unary、Server Stream、Client Stream、Bidirectional Stream
-- 🌐 内置 HTTP/2 支持
-- 🛠 完整的开发工具链
-  - Protocol Buffers 代码生成
-  - TypeScript 类型生成
+- 🚀 **高性能通信**
+
+  - 基于 Connect RPC 的高效通信协议
+  - 支持 HTTP/2 和多种 RPC 模式
+  - 兼容 gRPC、gRPC-Web 和 Connect 协议
+
+- 🛠 **完整工具链**
+
+  - Protocol Buffers 代码自动生成
+  - TypeScript 类型定义生成
   - Connect RPC 客户端和服务端代码生成
-- 🎯 模块化的服务架构
-- 🔌 可扩展的插件系统
-- ⚡️ 支持 gRPC、gRPC-Web 和 Connect 协议
-- 🔒 内置 CORS 支持
-- 📝 结构化的日志系统
-- 🎨 智能的前端集成
-  - 开发环境自动代理
+  - 内置开发工具和调试支持
+
+- 🎯 **企业级架构**
+
+  - 模块化的服务设计
+  - 可扩展的中间件系统
+  - 结构化的日志系统
+  - 灵活的配置管理
+
+- 🔒 **安全性和可靠性**
+
+  - 内置 CORS 支持
+  - 请求追踪和日志记录
+  - 错误处理和恢复机制
+
+- 🎨 **现代前端集成**
+  - 智能的开发环境代理
   - 生产环境静态文件服务
-  - SPA 路由支持
-  - 开发服务检测和提示
+  - SPA 路由自动支持
+  - 开发服务状态检测
 
 ## 技术栈
 
-### 后端
+### 后端技术
 
-- Go
-- Connect RPC
-- Protocol Buffers
+- Go 1.21+
+- Connect RPC (通信协议)
+- Protocol Buffers (数据序列化)
 - Echo (HTTP 框架)
+- Zap (日志系统)
 - Viper (配置管理)
 
-### 前端
+### 前端技术
 
 - TypeScript
 - React
-- Connect RPC Web Client
-- Vite (开发服务器和构建工具)
+- Connect-Web (RPC 客户端)
+- Vite (构建工具)
 
 ## 快速开始
 
-### 前置条件
+### 环境要求
 
-- Go 1.21+
-- Node.js 20+
+- Go 1.21 或更高版本
+- Node.js 20 或更高版本
 - Protocol Buffers 编译器
 - Buf CLI 工具
 
-### 安装
+### 安装步骤
 
-1. 克隆仓库：
+1. 克隆项目：
 
 ```bash
 git clone <repository-url>
@@ -68,18 +83,17 @@ cd frontend
 pnpm install
 ```
 
-3. 生成 Protocol Buffers 代码：
+3. 生成代码：
 
 ```bash
 buf generate
 ```
 
-### 开发
+### 开发流程
 
 1. 启动后端服务：
 
 ```bash
-# 或者你可以使用 go run backend/... serve
 go run backend serve
 ```
 
@@ -90,123 +104,93 @@ cd frontend
 pnpm dev
 ```
 
-服务器会自动检测前端开发服务是否运行。如果前端服务未启动，会显示友好的提示信息。
+## 配置说明
 
-### 配置
-
-项目使用 `config.yaml` 进行配置，支持以下配置项：
+配置文件：`config.yaml`
 
 ```yaml
-env: development # 环境：development/production
+env: development # 运行环境：development/production
 server:
   port: 21421 # 后端服务端口
-  host: 0.0.0.0
+  host: 0.0.0.0 # 服务监听地址
 frontend:
   port: 21422 # 前端开发服务器端口
   dist: ./dist # 前端构建输出目录
   isSpa: true # 是否为单页应用
 log:
-  level: info
-  format: text
-db:
-  host: 127.0.0.1
-  port: 5432
-  user: postgres
-  password: postgres
-  name: app
-  sslmode: disable
-  timezone: Asia/Shanghai
-  pool_max_conns: 10
-  pool_max_idle_conns: 5
-  pool_max_lifetime: 10m
-  pool_max_idle_time: 5m
+  level: info # 日志级别
+  format: text # 日志格式
 ```
 
 ## 项目结构
 
 ```
 .
-├── backend/             # 后端代码
-│   ├── cmd/            # 命令行工具
-│   ├── core/           # 核心功能
-│   ├── pkg/            # 生成的代码
-│   ├── serve/          # HTTP 服务器和前端集成
-│   └── service/        # 业务服务
-├── frontend/           # 前端代码
-│   ├── src/           # 源代码
-│   └── dist/          # 构建输出
-├── proto/              # Protocol Buffers 定义
-└── config.yaml         # 配置文件
+├── backend/           # 后端代码
+│   ├── cmd/          # 命令行工具
+│   ├── pkg/          # 公共包
+│   │   ├── logger/   # 日志系统
+│   │   └── util/     # 工具函数
+│   ├── serve/        # HTTP 服务
+│   └── service/      # 业务服务
+├── frontend/         # 前端代码
+├── proto/            # Protocol Buffers 定义
+└── config.yaml      # 配置文件
 ```
 
-## 前端开发模式
+## 开发模式
 
-框架提供两种前端运行模式：
+### 开发环境
 
-### 开发模式 (env: development)
+- 自动检测前端开发服务
+- 智能请求代理
+- 实时热重载
+- 开发者友好的错误提示
 
-- 自动检测前端开发服务器是否运行
-- 如果前端服务未运行，提供友好的错误提示
-- 将非 `/rpc` 请求代理到前端开发服务器
-- RPC 请求直接由后端处理
-- 支持热重载和开发工具
+### 生产环境
 
-### 生产模式 (env: production)
+- 高效的静态文件服务
+- SPA 路由支持
+- 优化的资源加载
+- 完整的错误处理
 
-- 静态文件服务，从 `frontend.dist` 目录提供文件
-- 支持单页应用 (SPA) 路由
-- 所有非 `/rpc` 路由返回 `index.html`
-- 高效的静态资源服务
+## API 开发指南
 
-## API 开发
-
-1. 在 `proto/` 目录下定义服务接口
+1. 在 `proto/` 目录定义服务接口
 2. 使用 `buf generate` 生成代码
-3. 在 `backend/service/` 实现服务接口
+3. 在 `backend/service/` 实现服务
 4. 在 `backend/app.go` 注册服务
 
-示例服务定义：
+示例：
 
 ```protobuf
-service TestService {
-  rpc Test1(Test1Request) returns (Test1Response) {}
-  rpc Test2(Test2Request) returns (Test2Response) {}
-  rpc Test3(Test3Request) returns (stream Test3Response) {}
+service ExampleService {
+  rpc Method(Request) returns (Response) {}
 }
 ```
 
-## 构建和部署
+## 构建部署
 
 ### 构建
 
 ```bash
-# 构建后端
+# 后端构建
 go build -o app backend/main.go
 
-# 构建前端
+# 前端构建
 cd frontend
 pnpm build
 ```
 
-### 部署
+### 部署步骤
 
-1. 配置 `config.yaml`，确保：
-   - `env` 设置为 `production`
-   - `frontend.dist` 指向正确的前端构建目录
-   - `frontend.isSpa` 根据应用类型设置
-2. 运行编译后的二进制文件：
+1. 配置 `config.yaml`
+2. 确保前端已构建
+3. 运行服务：
 
 ```bash
 ./app serve
 ```
-
-## 贡献指南
-
-1. Fork 项目
-2. 创建特性分支
-3. 提交变更
-4. 推送到分支
-5. 创建 Pull Request
 
 ## 许可证
 
