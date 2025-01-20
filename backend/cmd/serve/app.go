@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/url"
 	"path/filepath"
 	"strings"
 	"time"
@@ -16,6 +15,10 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
 	"golang.org/x/net/http2"
+)
+
+var (
+	SkipRoutePath = []string{}
 )
 
 type App struct {
@@ -96,42 +99,22 @@ func NewServeApp(core *core.App) (*App, error) {
 }
 
 func (app *App) SetupRpc(ctx context.Context) error {
-	// 获取 Vanguard transcoder 也就是 http 处理器
-	transcoder, err := app.core.GetContainer().GetVanguardTranscoder()
+	transcoder, err := app.core.GetContainer().BuildTranscoder()
 	if err != nil {
 		return err
 	}
 
-	stripPrefixHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.URL.Path = strings.TrimPrefix(r.URL.Path, "/rpc")
-		transcoder.ServeHTTP(w, r)
-	})
-
-	// 先注册 RPC 路由处理器
-	app.serve.Any("/rpc/*", echo.WrapHandler(stripPrefixHandler))
+	app.serve.Any("/rpc/*", echo.WrapHandler(transcoderPrefixHandler("/rpc", transcoder)))
+	SkipRoutePath = append(SkipRoutePath, "/rpc/*")
 	return nil
 }
 
 func (app *App) SetupFrontendDev(ctx context.Context) error {
 	config := app.core.GetConfig()
 	frontendPort := config.GetInt("frontend.port")
-
-	// 开发环境：先检查前端服务是否可用
 	target := fmt.Sprintf("http://localhost:%d", frontendPort)
 
-	// 前端服务可用，设置代理
-	proxy := middleware.ProxyWithConfig(middleware.ProxyConfig{
-		Skipper: func(c echo.Context) bool {
-			// 跳过 /rpc 路径的请求
-			return strings.HasPrefix(c.Path(), "/rpc")
-		},
-		Balancer: middleware.NewRoundRobinBalancer([]*middleware.ProxyTarget{
-			{
-				URL: util.Must(url.Parse(target)),
-			},
-		}),
-	})
-	app.serve.Use(proxy)
+	app.serve.Use(proxyFrontend(target))
 	return nil
 }
 
@@ -154,8 +137,10 @@ func (app *App) SetupFrontend(ctx context.Context) error {
 		// SPA 模式：所有未匹配的路由都返回 index.html
 		app.serve.GET("*", func(c echo.Context) error {
 			// 跳过已经由静态文件中间件处理的请求
-			if strings.HasPrefix(c.Path(), "/rpc") {
-				return nil
+			for _, path := range SkipRoutePath {
+				if strings.HasPrefix(c.Path(), path) {
+					return nil
+				}
 			}
 			return c.File(filepath.Join(distPath, "index.html"))
 		})

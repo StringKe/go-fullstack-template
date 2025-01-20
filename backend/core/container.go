@@ -13,7 +13,7 @@ type ServiceHandler interface {
 
 // Container 用于注册和获取所有的 RPC 服务
 type Container struct {
-	services []ServiceHandler // len ?
+	services []ServiceHandler
 }
 
 func NewContainer() *Container {
@@ -30,8 +30,8 @@ func (s *Container) GetAllServices() []ServiceHandler {
 	return s.services
 }
 
-// GetAllVanguardServices 获取所有的 Vanguard 服务
-func (s *Container) GetAllVanguardServices() []*vanguard.Service {
+// BuildServices 获取所有的 Vanguard 服务
+func (s *Container) BuildServices() []*vanguard.Service {
 	services := make([]*vanguard.Service, len(s.services))
 	for i, svc := range s.services {
 		services[i] = vanguard.NewService(svc.GetHandle())
@@ -40,6 +40,6 @@ func (s *Container) GetAllVanguardServices() []*vanguard.Service {
 }
 
 // Vanguard Transcoder
-func (s *Container) GetVanguardTranscoder() (*vanguard.Transcoder, error) {
-	return vanguard.NewTranscoder(s.GetAllVanguardServices())
+func (s *Container) BuildTranscoder() (*vanguard.Transcoder, error) {
+	return vanguard.NewTranscoder(s.BuildServices())
 }
