@@ -7,7 +7,6 @@ import (
 	"os/signal"
 
 	"app/backend/core"
-	"app/backend/serve"
 
 	"github.com/spf13/cobra"
 )
@@ -33,7 +32,7 @@ func init() {
 }
 
 func runCommand(app *core.App) error {
-	serveApp, err := serve.NewServeApp(app)
+	serveApp, err := NewServeApp(app)
 	if err != nil {
 		return err
 	}
